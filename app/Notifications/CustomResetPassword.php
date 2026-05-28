@@ -10,67 +10,90 @@ use Illuminate\Support\Facades\Log;
 class CustomResetPassword extends ResetPasswordNotification
 {
     /**
-     * Send the notification. Override agar menggunakan Brevo HTTP API
-     * (menghindari blokir port SMTP di Railway/hosting).
-     *
-     * @param  mixed  $notifiable
-     * @return void
+     * Override via() agar tidak menggunakan mail channel ketika
+     * Brevo API key tersedia (mencegah blokir SMTP di Railway).
      */
-    public function toMail($notifiable)
+    public function via($notifiable): array
+    {
+        $apiKey = config('services.brevo.api_key');
+
+        if ($apiKey) {
+            // Kirim langsung via Brevo HTTP API di sini
+            $this->sendViaBrevoApi($notifiable, $apiKey);
+            // Kembalikan array kosong agar Laravel tidak memproses channel mail
+            return [];
+        }
+
+        // Fallback: gunakan mail channel SMTP biasa (untuk lokal)
+        return ['mail'];
+    }
+
+    /**
+     * Kirim email reset sandi menggunakan Brevo HTTP API.
+     * Menggunakan HTTP (bukan SMTP) sehingga tidak terblokir di Railway.
+     */
+    protected function sendViaBrevoApi($notifiable, string $apiKey): void
+    {
+        $url    = $this->resetUrl($notifiable);
+        $expire = config('auth.passwords.' . config('auth.defaults.passwords') . '.expire', 60);
+
+        $htmlContent = "
+            <div style='font-family:sans-serif;max-width:600px;margin:0 auto;'>
+                <h2 style='color:#0058BE;'>Permintaan Reset Kata Sandi</h2>
+                <p>Halo, <strong>" . ($notifiable->name ?? '') . "</strong>!</p>
+                <p>Anda menerima email ini karena kami menerima permintaan untuk menyetel ulang kata sandi akun Anda di <strong>mylaundry</strong>.</p>
+                <p style='margin:24px 0;'>
+                    <a href='{$url}'
+                       style='background-color:#0058BE;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;'>
+                        Reset Kata Sandi
+                    </a>
+                </p>
+                <p style='color:#666;font-size:14px;'>Tautan ini akan kedaluwarsa dalam <strong>{$expire} menit</strong>.</p>
+                <p style='color:#666;font-size:14px;'>Jika Anda tidak meminta reset kata sandi, abaikan email ini.</p>
+                <hr style='border:none;border-top:1px solid #eee;margin:24px 0;'>
+                <p style='color:#999;font-size:13px;'>Salam hangat, <strong>mylaundry</strong></p>
+            </div>
+        ";
+
+        try {
+            $response = Http::timeout(10)->withHeaders([
+                'api-key'      => $apiKey,
+                'Content-Type' => 'application/json',
+                'Accept'       => 'application/json',
+            ])->post('https://api.brevo.com/v3/smtp/email', [
+                'sender' => [
+                    'name'  => config('mail.from.name', 'mylaundry'),
+                    'email' => config('mail.from.address'),
+                ],
+                'to' => [
+                    ['email' => $notifiable->email, 'name' => $notifiable->name ?? ''],
+                ],
+                'subject'     => 'Permintaan Reset Kata Sandi - mylaundry',
+                'htmlContent' => $htmlContent,
+            ]);
+
+            if ($response->successful()) {
+                Log::info('Brevo API: Email reset sandi berhasil dikirim ke ' . $notifiable->email);
+            } else {
+                Log::error('Brevo API Error [' . $response->status() . ']: ' . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error('Brevo API Exception: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Build the mail representation (digunakan sebagai fallback SMTP lokal).
+     */
+    public function toMail($notifiable): MailMessage
     {
         if (static::$toMailCallback) {
             return call_user_func(static::$toMailCallback, $notifiable, $this->token);
         }
 
-        $url = $this->resetUrl($notifiable);
+        $url    = $this->resetUrl($notifiable);
         $expire = config('auth.passwords.' . config('auth.defaults.passwords') . '.expire', 60);
 
-        $apiKey = config('services.brevo.api_key');
-
-        // Jika API key Brevo tersedia, gunakan HTTP API (tidak terblokir di hosting)
-        if ($apiKey) {
-            $htmlContent = "
-                <h2>Permintaan Reset Kata Sandi - mylaundry</h2>
-                <p>Halo!</p>
-                <p>Anda menerima email ini karena kami menerima permintaan untuk menyetel ulang kata sandi akun Anda.</p>
-                <p style='margin: 24px 0;'>
-                    <a href='{$url}' style='background-color:#0058BE;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;'>
-                        Reset Kata Sandi
-                    </a>
-                </p>
-                <p>Tautan reset kata sandi ini akan kedaluwarsa dalam waktu {$expire} menit.</p>
-                <p>Jika Anda tidak meminta reset kata sandi, abaikan email ini.</p>
-                <br>
-                <p>Salam hangat, mylaundry</p>
-            ";
-
-            try {
-                $response = Http::withHeaders([
-                    'api-key' => $apiKey,
-                    'Content-Type' => 'application/json',
-                ])->post('https://api.brevo.com/v3/smtp/email', [
-                    'sender' => [
-                        'name' => config('mail.from.name', 'mylaundry'),
-                        'email' => config('mail.from.address'),
-                    ],
-                    'to' => [
-                        ['email' => $notifiable->email, 'name' => $notifiable->name ?? ''],
-                    ],
-                    'subject' => 'Permintaan Reset Kata Sandi - mylaundry',
-                    'htmlContent' => $htmlContent,
-                ]);
-
-                if (!$response->successful()) {
-                    Log::error('Brevo API Error: ' . $response->body());
-                }
-
-                return null; // Email sudah dikirim via API, tidak perlu MailMessage
-            } catch (\Exception $e) {
-                Log::error('Brevo API Exception: ' . $e->getMessage());
-            }
-        }
-
-        // Fallback ke SMTP biasa jika API key tidak diset
         return (new MailMessage)
             ->subject('Permintaan Reset Kata Sandi - mylaundry')
             ->greeting('Halo!')
