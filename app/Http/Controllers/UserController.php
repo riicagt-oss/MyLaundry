@@ -17,7 +17,7 @@ class UserController extends Controller
         $shop = Shop::firstOrCreate(
             ['user_id' => $ownerId],
             [
-                'shop_name' => 'Toko Laundry (Default)',
+                'shop_name' => 'Toko Laundry',
                 'delivery_fee_per_km' => 0,
                 'free_delivery_km' => 0,
                 'is_delivery_active' => false,
