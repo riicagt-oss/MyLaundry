@@ -468,8 +468,8 @@ class TransactionController extends Controller
                 $pesanUpdate .= "Mohon ditunggu, terima kasih!";
             } elseif ($nextStatus === 'TIBA DI TOKO') {
                 $pesanUpdate = "Halo *$namaPelanggan*,\n\n"
-                             . "Cucian Anda sudah berhasil diambil oleh Driver kami dan saat ini sedang dalam perjalanan menuju toko. 🚚\n\n"
-                             . "Mohon ditunggu ya, terima kasih! 🙏";
+                             . "Pesanan Anda (No: *{$order->order_number}*) sudah sampai di toko kami dan akan segera kami input. ✅\n\n"
+                             . "Terima kasih! 🙏";
             } elseif ($nextStatus === 'DIAMBIL') {
                 if ($order->address) {
                     $pesanUpdate .= "Pesanan (No: *{$order->order_number}*) telah *DIKIRIM* ke alamat Anda. 🚚\n";
