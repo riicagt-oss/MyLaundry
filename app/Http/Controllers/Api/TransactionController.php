@@ -230,6 +230,7 @@ class TransactionController extends Controller
 
         $cashReceived = intval($request->cash_received ?? 0);
         $totalPrice = intval($validated['total_price']) + $deliveryFee;
+        $totalPrice = (int) (ceil($totalPrice / 500) * 500); // Bulatkan ke atas kelipatan 500
         $cashChange = $cashReceived - $totalPrice;
 
         try {
