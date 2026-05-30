@@ -257,7 +257,7 @@
                     <form method="POST" action="{{ route('logout') }}" class="w-full md:w-auto">
                         @csrf
                         <button type="submit" class="w-full md:w-auto h-11 px-8 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all shadow-sm text-xs uppercase tracking-widest">
-                            Keluar Sekarang
+                            Keluar
                         </button>
                     </form>
                 </div>
