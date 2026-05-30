@@ -183,7 +183,7 @@ class TransactionController extends Controller
                             $baseFee = $chargeableDistance * $shop->delivery_fee_per_km;
                             $multiplier = ($deliveryType === 'both') ? 2 : 1;
                             $rawFee = $baseFee * $multiplier;
-                            $deliveryFee = (int) $rawFee;
+                            $deliveryFee = (int) (ceil($rawFee / 500) * 500);
                         }
                     }
                 }
@@ -559,8 +559,8 @@ class TransactionController extends Controller
                         $multiplier = ($deliveryType === 'both') ? 2 : 1;
                         $rawFee = $baseFee * $multiplier;
                         
-                        // Tanpa pembulatan
-                        $finalFee = (int) $rawFee;
+                        // Pembulatan kelipatan 500 ke atas
+                        $finalFee = (int) (ceil($rawFee / 500) * 500);
                     }
 
                     return response()->json([
