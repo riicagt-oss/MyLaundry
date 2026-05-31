@@ -187,21 +187,41 @@
             </td>
             <td class="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm">
                 <p class="font-medium text-slate-900 dark:text-white">{{ $report->customer_name }}</p>
-                <p class="text-xs text-slate-500">
-                    @php
-                        $serviceName = explode('||', $report->service_name)[0];
-                        $unitDb = strtolower($report->unit ?? '');
-                        $isPcs = ($unitDb == 'pcs' || stripos($serviceName, 'satuan') !== false || stripos($serviceName, 'pcs') !== false);
-                        $weightValue = $isPcs ? (int)$report->weight : $report->weight;
-                        $alreadyHasUnit = preg_match('/\d+(\.\d+)?\s*(pcs|kg)/i', $serviceName);
-                    @endphp
-
-                    @if($alreadyHasUnit)
-                        {{ $serviceName }}
+                <div class="text-xs text-slate-500 mt-0.5 flex flex-col gap-0.5">
+                    @if($report->items && $report->items->count() > 0)
+                        @foreach($report->items as $item)
+                            @php
+                                $serviceName = explode('||', $item->service_name)[0];
+                                $unitDb = strtolower($item->unit ?? '');
+                                $isPcs = ($unitDb == 'pcs' || stripos($serviceName, 'satuan') !== false || stripos($serviceName, 'pcs') !== false);
+                                $weightValue = $isPcs ? (int)$item->qty_or_weight : $item->qty_or_weight;
+                                $alreadyHasUnit = preg_match('/\d+(\.\d+)?\s*(pcs|kg)/i', $serviceName);
+                            @endphp
+                            <span>
+                                @if($alreadyHasUnit)
+                                    {{ $serviceName }}
+                                @else
+                                    {{ $serviceName }} ({{ $weightValue }} {{ $isPcs ? 'Pcs' : 'Kg' }})
+                                @endif
+                            </span>
+                        @endforeach
                     @else
-                        {{ $serviceName }} ({{ $weightValue }} {{ $isPcs ? 'Pcs' : 'Kg' }})
+                        @php
+                            $serviceName = explode('||', $report->service_name)[0];
+                            $unitDb = strtolower($report->unit ?? '');
+                            $isPcs = ($unitDb == 'pcs' || stripos($serviceName, 'satuan') !== false || stripos($serviceName, 'pcs') !== false);
+                            $weightValue = $isPcs ? (int)$report->weight : $report->weight;
+                            $alreadyHasUnit = preg_match('/\d+(\.\d+)?\s*(pcs|kg)/i', $serviceName);
+                        @endphp
+                        <span>
+                            @if($alreadyHasUnit)
+                                {{ $serviceName }}
+                            @else
+                                {{ $serviceName }} ({{ $weightValue }} {{ $isPcs ? 'Pcs' : 'Kg' }})
+                            @endif
+                        </span>
                     @endif
-                </p>
+                </div>
             </td>
             <td class="px-4 sm:px-6 py-3 sm:py-4">
                 @if(strtolower($report->payment_method) == 'qris')
@@ -282,19 +302,39 @@
                                 <p class="text-[10px] text-slate-500 mt-0.5">{{ $report->updated_at->format('d/m/Y H:i') }}</p>
                             </div>
 
-                            <div class="text-xs text-slate-500 mb-3">
-                                @php
-                                    $serviceName = explode('||', $report->service_name)[0];
-                                    $unitDb = strtolower($report->unit ?? '');
-                                    $isPcs = ($unitDb == 'pcs' || stripos($serviceName, 'satuan') !== false || stripos($serviceName, 'pcs') !== false);
-                                    $weightValue = $isPcs ? (int)$report->weight : $report->weight;
-                                    $alreadyHasUnit = preg_match('/\d+(\.\d+)?\s*(pcs|kg)/i', $serviceName);
-                                @endphp
-
-                                @if($alreadyHasUnit)
-                                    {!! nl2br(e($serviceName)) !!}
+                            <div class="text-xs text-slate-500 mb-3 flex flex-col gap-0.5">
+                                @if($report->items && $report->items->count() > 0)
+                                    @foreach($report->items as $item)
+                                        @php
+                                            $serviceName = explode('||', $item->service_name)[0];
+                                            $unitDb = strtolower($item->unit ?? '');
+                                            $isPcs = ($unitDb == 'pcs' || stripos($serviceName, 'satuan') !== false || stripos($serviceName, 'pcs') !== false);
+                                            $weightValue = $isPcs ? (int)$item->qty_or_weight : $item->qty_or_weight;
+                                            $alreadyHasUnit = preg_match('/\d+(\.\d+)?\s*(pcs|kg)/i', $serviceName);
+                                        @endphp
+                                        <span>
+                                            @if($alreadyHasUnit)
+                                                {!! nl2br(e($serviceName)) !!}
+                                            @else
+                                                {!! nl2br(e($serviceName)) !!} ({{ $weightValue }} {{ $isPcs ? 'Pcs' : 'Kg' }})
+                                            @endif
+                                        </span>
+                                    @endforeach
                                 @else
-                                    {!! nl2br(e($serviceName)) !!} ({{ $weightValue }} {{ $isPcs ? 'Pcs' : 'Kg' }})
+                                    @php
+                                        $serviceName = explode('||', $report->service_name)[0];
+                                        $unitDb = strtolower($report->unit ?? '');
+                                        $isPcs = ($unitDb == 'pcs' || stripos($serviceName, 'satuan') !== false || stripos($serviceName, 'pcs') !== false);
+                                        $weightValue = $isPcs ? (int)$report->weight : $report->weight;
+                                        $alreadyHasUnit = preg_match('/\d+(\.\d+)?\s*(pcs|kg)/i', $serviceName);
+                                    @endphp
+                                    <span>
+                                        @if($alreadyHasUnit)
+                                            {!! nl2br(e($serviceName)) !!}
+                                        @else
+                                            {!! nl2br(e($serviceName)) !!} ({{ $weightValue }} {{ $isPcs ? 'Pcs' : 'Kg' }})
+                                        @endif
+                                    </span>
                                 @endif
                             </div>
 
