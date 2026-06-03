@@ -85,7 +85,7 @@
                         </span>
                         @elseif($order->status == 'TIBA DI TOKO' || $order->status == 'JEMPUTAN TIBA')
                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 mr-1.5"></span> ON PROGRESS
+                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 mr-1.5"></span> TIBA DI TOKO
                         </span>
                         @else
                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-gray-100 text-gray-700 dark:bg-gray-800/30 dark:text-gray-400">
